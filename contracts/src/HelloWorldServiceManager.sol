@@ -11,6 +11,8 @@ import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/I
 import {IHelloWorldServiceManager} from "./IHelloWorldServiceManager.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@eigenlayer/contracts/interfaces/IRewardsCoordinator.sol";
+import {ISignatureUtils} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtils.sol";
+import {IAllocationManagerTypes} from "eigenlayer-contracts/src/contracts/interfaces/IAllocationManager.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /**
@@ -43,14 +45,16 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         address _avsDirectory,
         address _stakeRegistry,
         address _rewardsCoordinator,
-        address _delegationManager
+        address _delegationManager,
+        address _allocationManager
 
     )
         ECDSAServiceManagerBase(
             _avsDirectory,
             _stakeRegistry,
             _rewardsCoordinator,
-            _delegationManager
+            _delegationManager,
+            _allocationManager
         )
     {}
 
@@ -100,5 +104,27 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
+    }
+
+
+    // these do not exist in ECDSAServiceManagerBase yet
+    function createOperatorSets(uint32[] memory operatorSetIds) external {
+        return;
+    }
+
+    function deregisterOperatorFromOperatorSets(address operator, uint32[] calldata operatorSetIds) external {
+        return;
+    }
+
+    function slashOperator(IAllocationManagerTypes.SlashingParams memory params) external {
+        return;
+    }
+
+    function registerOperatorToOperatorSets(
+        address operator,
+        uint32[] calldata operatorSetIds,
+        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature
+    ) external {
+        return;
     }
 }

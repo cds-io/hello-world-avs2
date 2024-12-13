@@ -21,7 +21,7 @@ import {IStrategyManager} from "@eigenlayer/contracts/interfaces/IStrategyManage
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {ISignatureUtils} from "@eigenlayer/contracts/interfaces/ISignatureUtils.sol";
 import {AVSDirectory} from "@eigenlayer/contracts/core/AVSDirectory.sol";
-import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import {IAVSDirectory, IAVSDirectoryTypes} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
 import {Test, console2 as console} from "forge-std/Test.sol";
 import {IHelloWorldServiceManager} from "../src/IHelloWorldServiceManager.sol";
 import {ECDSAUpgradeable} from
@@ -141,15 +141,8 @@ contract HelloWorldTaskManagerSetup is Test {
     ) internal {
         IDelegationManager delegationManager = IDelegationManager(coreDeployment.delegationManager);
 
-        IDelegationManager.OperatorDetails memory operatorDetails = IDelegationManager
-            .OperatorDetails({
-            __deprecated_earningsReceiver: operator.key.addr,
-            delegationApprover: address(0),
-            stakerOptOutWindowBlocks: 0
-        });
-
         vm.prank(operator.key.addr);
-        delegationManager.registerAsOperator(operatorDetails, "");
+        delegationManager.registerAsOperator(operator.key.addr, uint32(0), "");
     }
 
     function registerOperatorToAVS(
@@ -332,24 +325,32 @@ contract RegisterOperator is HelloWorldTaskManagerSetup {
         }
     }
 
-    function testVerifyOperatorStates() public view {
-        for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
-            address operatorAddr = operators[i].key.addr;
+function testVerifyOperatorStates() public view {
+    for (uint256 i = 0; i < OPERATOR_COUNT; i++) {
+        address operatorAddr = operators[i].key.addr;
 
-            uint256 operatorShares =
-                delegationManager.operatorShares(operatorAddr, tokenToStrategy[address(mockToken)]);
-            assertEq(
-                operatorShares, DEPOSIT_AMOUNT, "Operator shares in DelegationManager incorrect"
-            );
-        }
+        // Create array with single strategy
+        IStrategy[] memory strategies = new IStrategy[](1);
+        strategies[0] = tokenToStrategy[address(mockToken)];
+
+        // Get array of shares
+        uint256[] memory shares = delegationManager.getOperatorShares(operatorAddr, strategies);
+        
+        // Check first (and only) element
+        assertEq(
+            shares[0], 
+            DEPOSIT_AMOUNT, 
+            "Operator shares in DelegationManager incorrect"
+        );
     }
+}
 
     function test_RegisterOperatorToAVS() public {
         address operatorAddr = operators[0].key.addr;
         registerOperatorToAVS(operators[0]);
         assertTrue(
             avsDirectory.avsOperatorStatus(address(sm), operatorAddr)
-                == IAVSDirectory.OperatorAVSRegistrationStatus.REGISTERED,
+                == IAVSDirectoryTypes.OperatorAVSRegistrationStatus.REGISTERED,
             "Operator not registered in AVSDirectory"
         );
 
